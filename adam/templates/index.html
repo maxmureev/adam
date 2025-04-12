@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="px-3">
+  <p>DEBUG: User ID: {{ user.id if user else 'None' }}</p>
+  <p>DEBUG: AD Accounts: {{ ad_accounts | length }}</p>
+
+  {% if message %}
+  <div class="alert {% if 'Error' in message %}alert-danger{% else %}alert-success{% endif %}">
+    {{ message }}
+  </div>
+  {% endif %}
+
+  {% if ad_accounts %}
+  <h2>Existing AD account</h2>
+  <hr>
+  <div class="table-container">
+  <table class="table table-striped">
+    <tbody>
+      {% for account in ad_accounts %}
+      {% for column in columns %}
+      {% if column not in ['sso_user_id', 'sso_users'] %}
+      <tr>
+        <th>{{ column | replace("_", " ") }}</th>
+        <td>{{ account[column] }}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+    </div>
+  {% else %}
+  <h2>Creating new AD account</h2>
+  <hr>
+  <p class="lead">
+  <form action="/api/v1/users/{{ user.id }}/ldap_account" method="post" style="display: inline;">
+    <button type="submit" class="btn btn-primary py-2">Create</button>
+  </form>
+  </p>
+  {% endif %}
+</main>
+{% endblock %}

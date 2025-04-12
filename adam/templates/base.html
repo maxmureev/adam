@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" class="h-100" data-bs-theme="auto">
+
+<head>
+    <title>{{ title }}</title>
+    <script src="../assets/js/color-modes.js"></script>
+
+    <meta charset="utf-8">
+    <link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="../static/css/cover.css" rel="stylesheet">
+</head>
+
+<body class="d-flex h-100 text-center bg-body-tertiary">
+    <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+
+        {% include 'header.html' %}
+
+        {% block content %}{% endblock %}
+
+        <footer class="mt-auto px-3">
+            <p>Active Directory Account Manager</p>
+        </footer>
+    </div>
+
+    {% include 'theme.html' %}
+
+    <script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
