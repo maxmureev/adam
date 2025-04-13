@@ -216,3 +216,23 @@ class ADService:
             }
         finally:
             self.disconnect()
+
+    def reset_password(self, username: str, user_dn: str) -> str:
+        """Сбрасывает пароль пользователя в AD и возвращает новый пароль."""
+        try:
+            new_password = generate_password()
+            unicode_pwd = f'"{new_password}"'.encode("utf-16-le")
+            mod_attrs = [(ldap.MOD_REPLACE, "unicodePwd", unicode_pwd)]
+            self.connection.modify_s(user_dn, mod_attrs)
+            logger.info(f"Password reset for {username} at {user_dn}")
+            return new_password
+        except ldap.INSUFFICIENT_ACCESS:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Недостаточно прав для сброса пароля {username}",
+            )
+        except ldap.LDAPError as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Ошибка при сбросе пароля для {username}: {str(e)}",
+            )

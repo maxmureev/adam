@@ -1,12 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="px-3">
-  <p>DEBUG: User ID: {{ user.id if user else 'None' }}</p>
-  <p>DEBUG: AD Accounts: {{ ad_accounts | length }}</p>
+<main class="mt-4">
 
   {% if message %}
-  <div class="alert {% if 'Error' in message %}alert-danger{% else %}alert-success{% endif %}">
+  <div class="alert {% if 'Ошибка' in message %}alert-danger{% else %}alert-success{% endif %}">
     {{ message }}
   </div>
   {% endif %}
@@ -29,8 +27,26 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
+  <hr>
+  <h2>Reset AD account password</h2>
+  <form action="/api/v1/users/{{ user.id }}/ldap_account/reset_password" method="post"
+    class="d-flex flex-column align-items-center">
+  
+    <div class="mb-2 text-center">
+      <button type="submit" class="btn btn-outline-danger py-2" id="resetButton" disabled>Reset password</button>
     </div>
+    <div class="form-check mb-2 text-center">
+      <input type="checkbox" class="form-check-input" id="confirmReset"
+        onchange="document.getElementById('resetButton').disabled = !this.checked;">
+      <label class="form-check-label" for="confirmReset">I'm absolutely sure!</label>
+    </div>
+    <div class="mb-2 text-center">
+      <small class="text-muted">A new password will be generated automatically</small>
+    </div>
+  </form>
   {% else %}
+
   <h2>Creating new AD account</h2>
   <hr>
   <p class="lead">
