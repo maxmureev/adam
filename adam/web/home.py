@@ -29,6 +29,12 @@ async def logout() -> RedirectResponse:
     return response
 
 
+@home_router.get("/features", response_class=HTMLResponse, include_in_schema=False)
+async def features(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "features.html", {"request": request, "title": "Features"}
+    )
+
 @home_router.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def home_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     auth_token = request.cookies.get("auth_token")

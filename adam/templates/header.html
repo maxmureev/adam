@@ -7,8 +7,12 @@
 
         <div class="d-flex align-items-center">
             <nav class="nav nav-masthead ms-3">
-                <a class="nav-link fw-bold py-1 px-0 active" aria-current="page" href="/">Home</a>
-                <a class="nav-link fw-bold py-1 px-0" href="#">Features</a>
+                <a class="nav-link fw-bold py-1 px-0 {% if request.url.path == '/' %}active{% endif %}" aria-current="page"
+                    href="/">Home</a>
+                {% if user is not defined %}
+                <a class="nav-link fw-bold py-1 px-0 {% if request.url.path == '/features' %}active{% endif %}"
+                    href="/features">Features</a>
+                {% endif %}
                 {% if user is defined %}
                 <a class="nav-link fw-bold py-1 px-0" href="/logout">Logout</a>
                 {% endif %}
