@@ -1,4 +1,3 @@
-# services/encryption.py
 import re
 import os
 from cryptography.fernet import Fernet
