@@ -1,4 +1,3 @@
-# api/v1/ldap.py
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -46,8 +45,13 @@ async def create_ldap_account_route(
     ad_service = ADService()
 
     try:
-        ad_account = ad_service.create_account(user_id, db, username)
-        logger.info(f"Account created for {username}: {ad_account.__dict__}")
+        ad_account, was_existing = ad_service.create_account(user_id, db, username)
+        logger.info(f"Account processed for {username}: {ad_account.__dict__}")
+        success_message = (
+            "Учётная запись AD уже существовала, пароль сброшен"
+            if was_existing
+            else "Учётная запись AD успешно создана"
+        )
     except HTTPException as e:
         error_message = e.detail
         logger.error(f"Creation error: {error_message}")
@@ -57,7 +61,6 @@ async def create_ldap_account_route(
             )
         return RedirectResponse(url=f"/?message={error_message}", status_code=303)
 
-    success_message = "Учётная запись AD успешно создана"
     logger.info(f"Success: {success_message}")
     if "application/json" in request.headers.get("Accept", ""):
         account_dict = {
@@ -65,6 +68,9 @@ async def create_ldap_account_route(
             "sso_user_id": str(ad_account.sso_user_id),
             "Kadmin_principal": ad_account.Kadmin_principal,
             "Admin_DN": ad_account.Admin_DN,
+            "Kadmin_password": db_service.encryptor.decrypt_password(
+                ad_account.Kadmin_password
+            ),
         }
         return JSONResponse(
             status_code=200,

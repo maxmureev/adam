@@ -1,5 +1,4 @@
-# services/ad_service.py
-from typing import Optional
+from typing import Optional, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from uuid import UUID
@@ -12,6 +11,7 @@ from config import config
 from services.encryption import PasswordEncryptor
 from services.utils import generate_password
 from services.db_service import DBService
+from models.ldap_accounts import LDAPAccount
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -73,7 +73,6 @@ class ADService:
             result = self.connection.search_s(
                 base_dn, ldap.SCOPE_SUBTREE, search_filter
             )
-            # Проверяем, что результат содержит реальные пользовательские записи
             valid_results = [(dn, attrs) for dn, attrs in result if dn is not None]
             if valid_results:
                 logger.info(f"Found user objects for {username}: {valid_results}")
@@ -104,20 +103,43 @@ class ADService:
 
     def create_account(
         self, user_id: UUID, db: Session, username: str
-    ) -> "LDAPAccount":
-        """Создает учетную запись в AD и сохраняет её в БД"""
+    ) -> Tuple[LDAPAccount, bool]:
+        """Создает учетную запись в AD или сбрасывает пароль, если она уже существует, и сохраняет в БД"""
         try:
             self.connect()
             logger.info(
-                f"Creating account for {username}, domain: {config.ldap.domain}"
+                f"Processing account for {username}, domain: {config.ldap.domain}"
             )
 
-            # Проверка существования пользователя
-            if self.user_exists(username):
+            db_service = DBService(db)
+            # Проверяем, есть ли запись в БД
+            existing_db_account = db_service.get_ldap_accounts_by_user_id(user_id)
+            if any(
+                account.Kadmin_principal == username for account in existing_db_account
+            ):
                 raise HTTPException(
-                    status_code=409, detail=f"Учетная запись {username} уже существует"
+                    status_code=409,
+                    detail=f"Учетная запись {username} уже существует в БД",
                 )
 
+            # Проверка существования пользователя в AD
+            was_existing = self.user_exists(username)
+            if was_existing:
+                logger.info(f"Account {username} exists in AD, resetting password")
+                # Сбрасываем пароль
+                user_dn = f"CN={username},{config.ldap.default_users_dn}"
+                new_password = self.reset_password(username, user_dn)
+                encrypted_password = self.encryptor.encrypt_password(new_password)
+
+                # Сохраняем запись в БД
+                ad_account = db_service.create_ldap_account_record(
+                    user_id, username, encrypted_password
+                )
+                logger.info(f"Account {username} linked to DB for user {user_id}")
+                return ad_account, True
+
+            # Если аккаунта в AD нет, создаем новый
+            logger.info(f"Creating new account for {username}")
             # Генерация и шифрование пароля
             password = generate_password()
             encrypted_password = self.encryptor.encrypt_password(password)
@@ -174,12 +196,11 @@ class ADService:
             self.create_ou(f"{username}_ou", config.ldap.default_users_dn)
 
             # Сохранение в БД
-            db_service = DBService(db)
             ad_account = db_service.create_ldap_account_record(
                 user_id, username, encrypted_password
             )
 
-            return ad_account
+            return ad_account, False
 
         except ldap.ALREADY_EXISTS:
             raise HTTPException(
