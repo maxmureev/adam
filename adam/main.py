@@ -14,7 +14,6 @@ app.include_router(api.api_router)
 app.include_router(web.home_router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
 
 # Инициализирует базу при старте
