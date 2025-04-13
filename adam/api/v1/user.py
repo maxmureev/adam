@@ -45,7 +45,7 @@ def create_user(user: SSOUserCreate, db: Session = Depends(get_db)):
 
     # Создает нового пользователя
     db_user = SSOUser(
-        id=uuid4(),  # Генерируем UUID
+        id=uuid4(),  # Генерирует UUID
         sso_id=user.sso_id,
         username=user.username,
         email=user.email,

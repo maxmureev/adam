@@ -28,7 +28,7 @@ class SSOConfig(BaseModel):
     client_id: SecretStr
     client_secret: SecretStr
     redirect_uri: str
-
+    allow_insecure_http: bool
 
 class LDAPConfig(BaseModel):
     domain: str

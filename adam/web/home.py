@@ -7,7 +7,7 @@ from itsdangerous import URLSafeSerializer
 from uuid import UUID
 
 from models.database import get_db
-from services.db_service import get_sso_user_by_id, get_ldap_accounts_by_user_id
+from services.db_service import DBService
 from config import SECRET_KEY
 
 home_router = APIRouter()
@@ -40,13 +40,14 @@ async def home_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
     except Exception as e:
         return templates.TemplateResponse("login.html", {"request": request})
 
-    # Получить пользователя через db_service
-    sso_user = get_sso_user_by_id(db, user_id)
+    # Получить пользователя через DBService
+    db_service = DBService(db)
+    sso_user = db_service.get_sso_user_by_id(user_id)
     if not sso_user:
         return templates.TemplateResponse("login.html", {"request": request})
 
-    # Получить учетные записи AD через db_service и расшифровываем пароли
-    ad_accounts = get_ldap_accounts_by_user_id(db, user_id)
+    # Получить учетные записи AD через DBService
+    ad_accounts = db_service.get_ldap_accounts_by_user_id(user_id)
 
     # Получить список колонок из модели LDAPAccount
     from models.ldap_accounts import LDAPAccount

@@ -6,5 +6,5 @@ sso = YandexSSO(
     client_id=config.sso.client_id.get_secret_value(),
     client_secret=config.sso.client_secret.get_secret_value(),
     redirect_uri=config.sso.redirect_uri,
-    allow_insecure_http=True,
+    allow_insecure_http=config.sso.allow_insecure_http,
 )
