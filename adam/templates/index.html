@@ -32,7 +32,7 @@
   <h2>Reset AD account password</h2>
   <form action="/api/v1/users/{{ user.id }}/ldap_account/reset_password" method="post"
     class="d-flex flex-column align-items-center">
-  
+
     <div class="mb-2 text-center">
       <button type="submit" class="btn btn-outline-danger py-2" id="resetButton" disabled>Reset password</button>
     </div>
@@ -47,7 +47,7 @@
   </form>
   {% else %}
 
-  <h2>Creating new AD account</h2>
+  <h2>Create a new AD account?</h2>
   <hr>
   <p class="lead">
   <form action="/api/v1/users/{{ user.id }}/ldap_account" method="post" style="display: inline;">

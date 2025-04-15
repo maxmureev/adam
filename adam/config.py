@@ -34,12 +34,11 @@ class LDAPConfig(BaseModel):
     domain: str
     base_dn: str
     default_users_ou: Optional[str] = None
-    group_name: Optional[str] = None
+    member_of_groups: Optional[List[str]] = None
     url: str
     admin_dn: str
     admin_pass: SecretStr
     default_users_dn: str
-    # chiper_key: str
     host: Optional[str] = None
     realm: Optional[str] = None
     nested_dn: Optional[str] = None
@@ -58,10 +57,7 @@ class Settings(BaseSettings):
     sso: SSOConfig
     ldap: LDAPConfig
 
-    # Явно объявляем вычисляемые поля
-    # nested_dn: Dict[str, str] = {}
-    # host: str = ""
-    # realm: str = ""
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

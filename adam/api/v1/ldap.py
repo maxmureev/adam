@@ -8,7 +8,8 @@ from config import config
 from models.database import get_db
 from services.ad_service import ADService
 from services.db_service import DBService
-from services.utils import generate_username
+from services.utils import generate_password
+from schemas.ldap import LDAPUserAttributes
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,7 +29,7 @@ async def get_ldap_accounts(user_id: UUID, db: Session = Depends(get_db)):
 
 
 @ldap_router.post("/ldap_account")
-async def create_ldap_account_route(
+async def create_ldap_account(
     user_id: UUID, request: Request, db: Session = Depends(get_db)
 ):
     logger.info(f"POST /api/v1/user/{user_id}/ldap_account called")
@@ -41,12 +42,44 @@ async def create_ldap_account_route(
             return JSONResponse(status_code=404, content={"detail": error_message})
         return RedirectResponse(url=f"/?message={error_message}", status_code=303)
 
-    username = generate_username(sso_user.email)
-    ad_service = ADService()
-
+    # Извлекаем username из email
     try:
-        ad_account, was_existing = ad_service.create_account(user_id, db, username)
-        logger.info(f"Account processed for {username}: {ad_account.__dict__}")
+        username = sso_user.email.split("@")[0].replace(
+            ".", "_"
+        )  # Например, "m_mureev" из "m.mureev@some.domain"
+    except IndexError:
+        error_message = "Некорректный email пользователя"
+        logger.error(f"Invalid email format: {sso_user.email}")
+        if "application/json" in request.headers.get("Accept", ""):
+            return JSONResponse(status_code=400, content={"detail": error_message})
+        return RedirectResponse(url=f"/?message={error_message}", status_code=303)
+
+    logger.info(f"Сгенерирован username: {username}")
+    password = generate_password()
+
+    # Формируем атрибуты, используя sso_user.email для mail
+    try:
+        attributes = LDAPUserAttributes(
+            cn=username,
+            sAMAccountName=username,
+            userPrincipalName=f"{username}@{config.ldap.domain}",
+            mail=sso_user.email,
+            password=password,
+        )
+        logger.info(f"Созданы атрибуты для {username}: {attributes.dict()}")
+    except ValueError as e:
+        error_message = f"Ошибка валидации атрибутов: {str(e)}"
+        logger.error(error_message)
+        if "application/json" in request.headers.get("Accept", ""):
+            return JSONResponse(status_code=400, content={"detail": error_message})
+        return RedirectResponse(url=f"/?message={error_message}", status_code=303)
+
+    ad_service = ADService()
+    try:
+        ad_account, was_existing = ad_service.create_account(
+            user_id, db, username, attributes
+        )
+        logger.info(f"Account processed for {username}: {vars(ad_account)}")
         success_message = (
             "Учётная запись AD уже существовала, пароль сброшен"
             if was_existing
@@ -64,8 +97,7 @@ async def create_ldap_account_route(
     logger.info(f"Success: {success_message}")
     if "application/json" in request.headers.get("Accept", ""):
         account_dict = {
-            "id": str(ad_account.id),
-            "sso_user_id": str(ad_account.sso_user_id),
+            "sso_user_id": str(ad_account.sso_user_id),  # Нужный идентификатор
             "Kadmin_principal": ad_account.Kadmin_principal,
             "Admin_DN": ad_account.Admin_DN,
             "Kadmin_password": db_service.encryptor.decrypt_password(
@@ -91,7 +123,7 @@ async def reset_ldap_account_password(user_id: UUID, db: Session = Depends(get_d
         if not sso_user:
             raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-        ldap_username = generate_username(sso_user.email)
+        ldap_username = sso_user.email.split("@")[0].replace(".", "_")
         accounts = db_service.get_ldap_accounts_by_user_id(user_id)
         account_found = None
         for account in accounts:

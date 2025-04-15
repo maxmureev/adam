@@ -14,7 +14,7 @@ user_router = APIRouter(prefix=config.api.v1.users, tags=["User"])
 
 
 @user_router.get("/{username}", response_model=SSOUserResponse)
-def get_user_by_username(username: str, db: Session = Depends(get_db)):
+def get_id_by_username(username: str, db: Session = Depends(get_db)):
     # Ищет пользователя по username
     db_user = db.query(SSOUser).filter(SSOUser.username == username).first()
 

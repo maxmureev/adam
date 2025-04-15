@@ -2,11 +2,16 @@
 
 {% block content %}
 
-<main class="mt-4">
+<main class="mt-4 container text-center">
 
-    <h1>AD.AM - easy way to create your account in AD</h1>
+    <div class="logo-container">
+        <img src="/static/logo-light.png" class="login-logo-light" alt="AD.AM Logo">
+        <img src="/static/logo-dark.png" class="login-logo-dark" alt="AD.AM Logo">
+    </div>
+
+    <h2>Just create your AD account</h2>
     <p class="lead">Login required:</p>
-    <a href="/api/auth/login" class="btn btn-primary py-2">Sign in with SSO</a>
+    <a href="/api/auth/login" class="btn btn-primary py-2">Login with SSO</a>
 
 </main>
 
