@@ -18,8 +18,8 @@
 ## Реализация
 
 Договор о наименованиях: \
-**Пользователь** (user) - пользоватесь сервиса, который логинится через SSO и хранится в таблице users \
-**Аккаунт** (учетная запись) - LDAP пользователь, который и требуется создать, хранится в таблице ldap_accounts
+**Пользователь** (user) - пользоватесь сервиса, который логинится через SSO и хранится в таблице users. \
+**Аккаунт** (учетная запись) - LDAP пользователь, который и требуется создать, хранится в таблице ldap_accounts.
 
 В требованиях подразумевается, что у пользователя может быть только один LDAP аккаунт и только в AD реализации.
 В частности, сброс пароля реализован исходя из предпосылки одного аккаунта на пользователя.
@@ -45,14 +45,18 @@
   - Данные аккаунта (username, пароль в зашифрованном виде) сохраняются в базе данных и связываются с профилем пользователя. Это предотвращает необходимость сброса пароля для его отображения, так как пароль в AD нельзя посмотреть, а только сбросить
 - После появления записи об AD аккаунте в БД, результат отображается на страничке в виде списка параметров для настройки ADCM
 
-## Installing packages for building dependencies
+## Run
 
 ```shell
-python3 -m venv .venv
-source ./.venv/bin/activate
+docker build . -t adam:v0.0.1
+docker run --rm --name adam --env-file ./adam/.env --publish 8000:8000 adam:v0.0.1
 ```
 
-### macOS
+## Development
+
+### Installing packages for building dependencies
+
+#### macOS
 
 ```shell
 pip install python-ldap \
@@ -60,20 +64,7 @@ pip install python-ldap \
     --global-option="-I$(xcrun --show-sdk-path)/usr/include/sasl"
 ```
 
-### Alpine
-
-```shell
-apk add build-base openldap-dev python2-dev python3-dev
-```
-
-### CentOS
-
-```shell
-yum groupinstall "Development tools"
-yum install openldap-devel python-devel
-```
-
-### Debian
+#### Debian/Ubuntu
 
 ```shell
 apt-get install build-essential python3-dev python2.7-dev \
@@ -81,7 +72,14 @@ apt-get install build-essential python3-dev python2.7-dev \
     lcov valgrind
 ```
 
-## Installing dependencies
+<https://www.python-ldap.org/en/python-ldap-3.3.0/installing.html>
+
+### Installing dependencies
+
+```shell
+python3 -m venv .venv
+source ./.venv/bin/activate
+```
 
 ```shell
 ./.venv/bin/pip install -U pip setuptools
@@ -89,7 +87,7 @@ apt-get install build-essential python3-dev python2.7-dev \
 poetry install
 ```
 
-## Run
+### Run
 
 ```shell
 cd adam

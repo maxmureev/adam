@@ -1,0 +1,6 @@
+**/*.git*
+**/.*
+**/tests/
+# adam/database.**
+venv
+**/__pycache__

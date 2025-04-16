@@ -1,11 +1,10 @@
 [project]
 name = "adam"
 version = "0.0.1"
-description = ""
+description = "Active Directory Account Manager"
 authors = [
     {name = "Max Mureev"}
 ]
-readme = "README.md"
 
 requires-python = ">=3.12"
 
@@ -25,6 +24,7 @@ dependencies = [
     "fastapi-sso (>=0.17.0,<0.18.0)",
     "aiosqlite (>=0.21.0,<0.22.0)",
     "greenlet (>=3.1.1,<4.0.0)",
+    "gunicorn (>=23.0.0,<24.0.0)",
 ]
 
 
