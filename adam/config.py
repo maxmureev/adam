@@ -4,9 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Dict, List, Optional
 
 
-# Генерация секретного ключа
-SECRET_KEY = secrets.token_urlsafe(32)
-
+class EncryptionConfig(BaseModel):
+    secret_key: SecretStr
+    user_session_key: SecretStr
 
 class RunConfig(BaseModel):
     host: str = "0.0.0.0"
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     api: ApiPrefix = ApiPrefix()
     sso: SSOConfig
     ldap: LDAPConfig
-
+    encryption: EncryptionConfig
 
 
     def __init__(self, **kwargs):

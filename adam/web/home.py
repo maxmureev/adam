@@ -1,4 +1,3 @@
-# web/home.py
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -6,14 +5,13 @@ from sqlalchemy.orm import Session
 from itsdangerous import URLSafeSerializer
 from uuid import UUID
 
+from config import config
 from models.database import get_db
 from services.db_service import DBService
-from config import SECRET_KEY
 
 home_router = APIRouter()
 templates = Jinja2Templates(directory="templates")
-serializer = URLSafeSerializer(SECRET_KEY)
-
+serializer = URLSafeSerializer(config.encryption.user_session_key.get_secret_value())
 
 @home_router.get("/login", response_class=HTMLResponse, include_in_schema=False)
 async def login_page(request: Request) -> HTMLResponse:
@@ -21,13 +19,11 @@ async def login_page(request: Request) -> HTMLResponse:
         "login.html", {"request": request, "title": "Login"}
     )
 
-
 @home_router.get("/logout", include_in_schema=False)
 async def logout() -> RedirectResponse:
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie(key="auth_token")
     return response
-
 
 @home_router.get("/features", response_class=HTMLResponse, include_in_schema=False)
 async def features(request: Request) -> HTMLResponse:
@@ -54,7 +50,6 @@ async def home_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
 
     # Получить учетные записи AD через DBService
     ad_accounts = db_service.get_ldap_accounts_by_user_id(user_id)
-
     # Получить список колонок из модели LDAPAccount
     from models.ldap_accounts import LDAPAccount
 

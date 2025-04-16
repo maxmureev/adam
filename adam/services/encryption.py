@@ -1,22 +1,10 @@
 import re
-import os
 from cryptography.fernet import Fernet
-
+from config import config  # Импорт конфигурации
 
 class PasswordEncryptor:
-    def __init__(self, key_path: str = "secret.key"):
-        self.key_path = key_path
-        self.cipher = self._load_or_generate_key()
-
-    def _load_or_generate_key(self) -> Fernet:
-        """Загружает или генерирует ключ шифрования."""
-        if not os.path.exists(self.key_path):
-            key = Fernet.generate_key()
-            with open(self.key_path, "wb") as key_file:
-                key_file.write(key)
-        with open(self.key_path, "rb") as key_file:
-            key = key_file.read()
-        return Fernet(key)
+    def __init__(self):
+        self.cipher = Fernet(config.encryption.secret_key.get_secret_value().encode())
 
     def validate_password(self, password: str) -> bool:
         """Проверяет сложность пароля."""
