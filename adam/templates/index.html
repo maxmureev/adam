@@ -17,9 +17,9 @@
     <tbody>
       {% for account in ad_accounts %}
       {% for column in columns %}
-      {% if column not in ['sso_user_id', 'sso_users'] %}
+      {% if column not in ['sso_user_id', 'created_at'] %}
       <tr>
-        <th>{{ column | replace("_", " ") }}</th>
+        <th>{{ display_columns[column] }}</th>
         <td>{{ account[column] }}</td>
       </tr>
       {% endif %}

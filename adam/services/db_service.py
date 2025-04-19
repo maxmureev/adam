@@ -24,12 +24,12 @@ class DBService:
         )
         for account in accounts:
             try:
-                account.Kadmin_password = self.encryptor.decrypt_password(
-                    account.Kadmin_password
+                account.kadmin_password = self.encryptor.decrypt_password(
+                    account.kadmin_password
                 )
             except Exception as e:
                 print(f"Ошибка расшифровки пароля: {e}")
-                account.Kadmin_password = "Ошибка расшифровки"
+                account.kadmin_password = "Ошибка расшифровки"
         return accounts
 
     def create_ldap_account_record(
@@ -38,14 +38,14 @@ class DBService:
         """Создает запись учетной записи LDAP в базе данных."""
         ad_account = LDAPAccount(
             sso_user_id=user_id,
-            KDC_hosts=config.ldap.host,
-            Realm=config.ldap.realm,
-            Kadmin_server=config.ldap.host,
-            Kadmin_principal=username,
-            Kadmin_password=encrypted_password,
-            Admin_DN=f"CN={username},{config.ldap.default_users_dn}",
-            LDAP_URL=config.ldap.url,
-            Container_DN=f"OU={username}_ou,{config.ldap.default_users_dn}",
+            kdc_hosts=config.ldap.host,
+            realm=config.ldap.realm,
+            kadmin_server=config.ldap.host,
+            kadmin_principal=username,
+            kadmin_password=encrypted_password,
+            admin_dn=f"CN={username},{config.ldap.default_users_dn}",
+            ldap_url=config.ldap.url,
+            container_dn=f"OU={username}_ou,{config.ldap.default_users_dn}",
         )
         self.db.add(ad_account)
         self.db.commit()
@@ -56,7 +56,7 @@ class DBService:
         """Удаляет учетную запись LDAP из базы данных."""
         accounts = self.get_ldap_accounts_by_user_id(user_id)
         for account in accounts:
-            if account.Kadmin_principal == username:
+            if account.kadmin_principal == username:
                 self.db.delete(account)
                 self.db.commit()
                 break

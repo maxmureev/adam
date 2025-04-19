@@ -98,10 +98,10 @@ async def create_ldap_account(
     if "application/json" in request.headers.get("Accept", ""):
         account_dict = {
             "sso_user_id": str(ad_account.sso_user_id),  # Нужный идентификатор
-            "Kadmin_principal": ad_account.Kadmin_principal,
-            "Admin_DN": ad_account.Admin_DN,
-            "Kadmin_password": db_service.encryptor.decrypt_password(
-                ad_account.Kadmin_password
+            "kadmin_principal": ad_account.kadmin_principal,
+            "admin_DN": ad_account.admin_dn,
+            "kadmin_password": db_service.encryptor.decrypt_password(
+                ad_account.kadmin_password
             ),
         }
         return JSONResponse(
@@ -127,7 +127,7 @@ async def reset_ldap_account_password(user_id: UUID, db: Session = Depends(get_d
         accounts = db_service.get_ldap_accounts_by_user_id(user_id)
         account_found = None
         for account in accounts:
-            if account.Kadmin_principal == ldap_username:
+            if account.kadmin_principal == ldap_username:
                 account_found = account
                 break
         if not account_found:
@@ -139,7 +139,7 @@ async def reset_ldap_account_password(user_id: UUID, db: Session = Depends(get_d
         new_password = ad_service.reset_password(ldap_username, user_dn)
         encrypted_password = ad_service.encryptor.encrypt_password(new_password)
 
-        account_found.Kadmin_password = encrypted_password
+        account_found.kadmin_password = encrypted_password
         db.commit()
         db.refresh(account_found)
 

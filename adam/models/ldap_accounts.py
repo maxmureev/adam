@@ -1,6 +1,7 @@
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, String, LargeBinary, ForeignKey
+from sqlalchemy import Column, String, LargeBinary, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from models.database import Base
 
@@ -8,14 +9,29 @@ from models.database import Base
 class LDAPAccount(Base):
     __tablename__ = "ldap_accounts"
 
-    KDC_hosts = Column(String)
-    Realm = Column(String)
-    Kadmin_server = Column(String)
-    Kadmin_principal = Column(String, primary_key=True, unique=True, index=True)
-    Kadmin_password = Column(LargeBinary)
-    Admin_DN = Column(String)
-    LDAP_URL = Column(String)
-    Container_DN = Column(String)
+    kdc_hosts = Column(String(255), nullable=True)
+    realm = Column(String(255), nullable=True)
+    kadmin_server = Column(String(255), nullable=True)
+    kadmin_principal = Column(String(255), primary_key=True, unique=True, index=True)
+    kadmin_password = Column(LargeBinary, nullable=False)
+    admin_dn = Column(String(255), nullable=True)
+    ldap_url = Column(String(255), nullable=True)
+    container_dn = Column(String(255), nullable=True)
 
+    created_at = Column(DateTime, default=datetime.now, nullable=False)
     sso_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+
     sso_users = relationship("SSOUser", back_populates="ldap_accounts")
+
+    # Dictionary of display names for the user
+    display_names = {
+        "kdc_hosts": "KDC hosts",
+        "realm": "Realm",
+        "kadmin_server": "Kadmin server",
+        "kadmin_principal": "Kadmin principal",
+        "kadmin_password": "Kadmin password",
+        "admin_dn": "Admin DN",
+        "ldap_url": "LDAP URL",
+        "container_dn": "Container DN",
+        "created_at": "Created at",
+    }
