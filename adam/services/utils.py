@@ -10,10 +10,3 @@ def generate_password(length=20):
     characters = string.ascii_letters + string.digits
     password = "".join(secrets.choice(characters) for _ in range(length))
     return password
-
-
-def generate_username(email: str) -> str:
-    """
-    Generates a username from an email address by taking the part before '@' and replacing dots with underscores.
-    """
-    return email.split("@")[0].replace(".", "_")
