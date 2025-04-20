@@ -40,24 +40,22 @@ async def create_ldap_account(
         logger.info(f"User not found: {user_id}")
         if "application/json" in request.headers.get("Accept", ""):
             return JSONResponse(status_code=404, content={"detail": error_message})
-        return RedirectResponse(url=f"/?message={error_message}", status_code=303)
+        request.session["flash_message"] = error_message
+        return RedirectResponse(url="/", status_code=303)
 
-    # Извлекаем username из email
     try:
-        username = sso_user.email.split("@")[0].replace(
-            ".", "_"
-        )  # Например, "m_mureev" из "m.mureev@some.domain"
+        username = sso_user.email.split("@")[0].replace(".", "_")
     except IndexError:
         error_message = "Некорректный email пользователя"
         logger.error(f"Invalid email format: {sso_user.email}")
         if "application/json" in request.headers.get("Accept", ""):
             return JSONResponse(status_code=400, content={"detail": error_message})
-        return RedirectResponse(url=f"/?message={error_message}", status_code=303)
+        request.session["flash_message"] = error_message
+        return RedirectResponse(url="/", status_code=303)
 
     logger.info(f"Сгенерирован username: {username}")
     password = generate_password()
 
-    # Формируем атрибуты, используя sso_user.email для mail
     try:
         attributes = LDAPUserAttributes(
             cn=username,
@@ -72,7 +70,8 @@ async def create_ldap_account(
         logger.error(error_message)
         if "application/json" in request.headers.get("Accept", ""):
             return JSONResponse(status_code=400, content={"detail": error_message})
-        return RedirectResponse(url=f"/?message={error_message}", status_code=303)
+        request.session["flash_message"] = error_message
+        return RedirectResponse(url="/", status_code=303)
 
     ad_service = ADService()
     try:
@@ -92,12 +91,13 @@ async def create_ldap_account(
             return JSONResponse(
                 status_code=e.status_code, content={"detail": error_message}
             )
-        return RedirectResponse(url=f"/?message={error_message}", status_code=303)
+        request.session["flash_message"] = error_message
+        return RedirectResponse(url="/", status_code=303)
 
     logger.info(f"Success: {success_message}")
     if "application/json" in request.headers.get("Accept", ""):
         account_dict = {
-            "sso_user_id": str(ad_account.sso_user_id),  # Нужный идентификатор
+            "sso_user_id": str(ad_account.sso_user_id),
             "kadmin_principal": ad_account.kadmin_principal,
             "admin_DN": ad_account.admin_dn,
             "kadmin_password": db_service.encryptor.decrypt_password(
@@ -108,11 +108,14 @@ async def create_ldap_account(
             status_code=200,
             content={"message": success_message, "account": account_dict},
         )
-    return RedirectResponse(url=f"/?message={success_message}", status_code=303)
+    request.session["flash_message"] = success_message
+    return RedirectResponse(url="/", status_code=303)
 
 
 @ldap_router.post("/ldap_account/reset_password")
-async def reset_ldap_account_password(user_id: str, db: Session = Depends(get_db)):
+async def reset_ldap_account_password(
+    user_id: str, request: Request, db: Session = Depends(get_db)
+):
     logger.info(f"POST /api/v1/user/{user_id}/ldap_account/reset_password called")
     db_service = DBService(db)
     ad_service = ADService()
@@ -121,7 +124,9 @@ async def reset_ldap_account_password(user_id: str, db: Session = Depends(get_db
         ad_service.connect()
         sso_user = db_service.get_sso_user_by_id(user_id)
         if not sso_user:
-            raise HTTPException(status_code=404, detail="Пользователь не найден")
+            error_message = "Пользователь не найден"
+            request.session["flash_message"] = error_message
+            raise HTTPException(status_code=404, detail=error_message)
 
         ldap_username = sso_user.email.split("@")[0].replace(".", "_")
         accounts = db_service.get_ldap_accounts_by_user_id(user_id)
@@ -131,9 +136,9 @@ async def reset_ldap_account_password(user_id: str, db: Session = Depends(get_db
                 account_found = account
                 break
         if not account_found:
-            raise HTTPException(
-                status_code=404, detail=f"Запись для {ldap_username} не найдена в БД"
-            )
+            error_message = f"Запись для {ldap_username} не найдена в БД"
+            request.session["flash_message"] = error_message
+            raise HTTPException(status_code=404, detail=error_message)
 
         user_dn = f"CN={ldap_username},{config.ldap.default_users_dn}"
         new_password = ad_service.reset_password(ldap_username, user_dn)
@@ -145,15 +150,17 @@ async def reset_ldap_account_password(user_id: str, db: Session = Depends(get_db
 
         success_message = f"Пароль для {ldap_username} успешно сброшен"
         logger.info(success_message)
-        return RedirectResponse(url=f"/?message={success_message}", status_code=303)
+        request.session["flash_message"] = success_message
+        return RedirectResponse(url="/", status_code=303)
 
     except HTTPException as e:
         logger.error(f"Reset password error: {e.detail}")
-        return RedirectResponse(url=f"/?message={e.detail}", status_code=303)
+        request.session["flash_message"] = e.detail
+        return RedirectResponse(url="/", status_code=303)
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        return RedirectResponse(
-            url=f"/?message=Ошибка при сбросе пароля: {str(e)}", status_code=303
-        )
+        error_message = f"Ошибка при сбросе пароля: {str(e)}"
+        logger.error(f"Unexpected error: {error_message}")
+        request.session["flash_message"] = error_message
+        return RedirectResponse(url="/", status_code=303)
     finally:
         ad_service.disconnect()

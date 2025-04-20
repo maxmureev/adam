@@ -3,10 +3,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from itsdangerous import URLSafeSerializer
-from uuid import UUID
 
 from config import config
 from models.database import get_db
+from models.ldap_accounts import LDAPAccount
 from services.db_service import DBService
 
 home_router = APIRouter()
@@ -70,14 +70,10 @@ async def home_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
             },
         )
 
-    # Получить учетные записи AD через DBService
     ad_accounts = db_service.get_ldap_accounts_by_user_id(user_id)
-    # Получить список колонок из модели LDAPAccount
-    from models.ldap_accounts import LDAPAccount
-
     columns = [col.name for col in LDAPAccount.__table__.columns]
     display_columns = {col: LDAPAccount.display_names.get(col, col) for col in columns}
-    message = request.query_params.get("message")
+    flash_message = request.session.pop("flash_message", None)
 
     return templates.TemplateResponse(
         "index.html",
@@ -87,7 +83,7 @@ async def home_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
             "ad_accounts": ad_accounts,
             "columns": columns,
             "display_columns": display_columns,
-            "message": message,
+            "message": flash_message,
             "title": "AD.AM",
         },
     )
