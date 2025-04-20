@@ -8,6 +8,7 @@ class EncryptionConfig(BaseModel):
     secret_key: SecretStr
     user_session_key: SecretStr
 
+
 class RunConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
@@ -30,6 +31,7 @@ class SSOConfig(BaseModel):
     redirect_uri: str
     allow_insecure_http: bool
 
+
 class LDAPConfig(BaseModel):
     domain: str
     base_dn: str
@@ -44,6 +46,12 @@ class LDAPConfig(BaseModel):
     nested_dn: Optional[str] = None
 
 
+class DatabaseConfig(BaseModel):
+    path: str = "data/database.sqlite"
+    url: str = f"sqlite:///{path}"
+    # url: str = f"sqlite+aiosqlite:///{path}"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -52,12 +60,12 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    db: DatabaseConfig = DatabaseConfig()
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
     sso: SSOConfig
     ldap: LDAPConfig
     encryption: EncryptionConfig
-
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

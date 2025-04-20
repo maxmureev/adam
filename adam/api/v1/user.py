@@ -65,7 +65,7 @@ def create_user(user: SSOUserCreate, db: Session = Depends(get_db)):
 
 @user_router.put("/{user_id}", response_model=SSOUserResponse)
 async def update_user(
-    user_id: UUID,  # UUID пользователя
+    user_id: str,  # UUID пользователя
     user_data: SSOUserCreate,  # Данные для обновления
     db: Session = Depends(get_db),  # Сессия БД
 ):
@@ -94,7 +94,7 @@ async def update_user(
 
 @user_router.delete("/{user_id}")
 async def delete_user(
-    user_id: UUID,
+    user_id: str,
     db: Session = Depends(get_db),
 ):
     db_user = db.query(SSOUser).filter(SSOUser.id == user_id).first()

@@ -3,7 +3,7 @@ name = "adam"
 version = "0.0.1"
 description = "Active Directory Account Manager"
 authors = [
-    {name = "Max Mureev"}
+    { name = "Max Mureev" }
 ]
 
 requires-python = ">=3.12"
@@ -25,6 +25,7 @@ dependencies = [
     "aiosqlite (>=0.21.0,<0.22.0)",
     "greenlet (>=3.1.1,<4.0.0)",
     "gunicorn (>=23.0.0,<24.0.0)",
+    "alembic (>=1.15.2,<2.0.0)",
 ]
 
 
@@ -34,5 +35,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
-[tool.poetry.group.dev.dependencies]
-black = "^25.1.0"

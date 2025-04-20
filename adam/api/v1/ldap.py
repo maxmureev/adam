@@ -18,7 +18,7 @@ ldap_router = APIRouter(prefix=f"{config.api.v1.users}/{{user_id}}", tags=["LDAP
 
 
 @ldap_router.get("/ldap_account")
-async def get_ldap_accounts(user_id: UUID, db: Session = Depends(get_db)):
+async def get_ldap_accounts(user_id: str, db: Session = Depends(get_db)):
     logger.info(f"GET /api/v1/user/{user_id}/ldap_account called")
     db_service = DBService(db)
     sso_user = db_service.get_sso_user_by_id(user_id)
@@ -30,7 +30,7 @@ async def get_ldap_accounts(user_id: UUID, db: Session = Depends(get_db)):
 
 @ldap_router.post("/ldap_account")
 async def create_ldap_account(
-    user_id: UUID, request: Request, db: Session = Depends(get_db)
+    user_id: str, request: Request, db: Session = Depends(get_db)
 ):
     logger.info(f"POST /api/v1/user/{user_id}/ldap_account called")
     db_service = DBService(db)
@@ -112,7 +112,7 @@ async def create_ldap_account(
 
 
 @ldap_router.post("/ldap_account/reset_password")
-async def reset_ldap_account_password(user_id: UUID, db: Session = Depends(get_db)):
+async def reset_ldap_account_password(user_id: str, db: Session = Depends(get_db)):
     logger.info(f"POST /api/v1/user/{user_id}/ldap_account/reset_password called")
     db_service = DBService(db)
     ad_service = ADService()

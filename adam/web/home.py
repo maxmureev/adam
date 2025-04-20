@@ -48,7 +48,7 @@ async def home_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
         )
 
     try:
-        user_id = UUID(serializer.loads(auth_token))
+        user_id = str(serializer.loads(auth_token))
     except Exception as e:
         return templates.TemplateResponse(
             "login.html",

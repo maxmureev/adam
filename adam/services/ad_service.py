@@ -81,7 +81,7 @@ class ADService:
                 continue
 
     def create_account(
-        self, user_id: UUID, db: Session, username: str, attributes: LDAPUserAttributes
+        self, user_id: str, db: Session, username: str, attributes: LDAPUserAttributes
     ) -> Tuple[LDAPAccount, bool]:
         try:
             self.connect()

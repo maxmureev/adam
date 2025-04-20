@@ -1,31 +1,26 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
-# from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 
 import api
 import web
 from models.database import init_db
 from config import config
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(api.api_router)
 app.include_router(web.home_router)
 app.include_router(api.health_router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
-# Инициализирует базу при старте
-@app.on_event("startup")
-async def startup():
-    init_db()
-
-
-# @asynccontextmanager
-# async def lifespan():
-#     init_db()
 
 
 if __name__ == "__main__":
