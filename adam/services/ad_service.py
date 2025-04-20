@@ -21,7 +21,7 @@ class ADService:
         self.encryptor = PasswordEncryptor()
 
     def connect(self, timeout: int = 2) -> None:
-        """Устанавливает соединение с Active Directory"""
+        """Connect to Active Directory"""
         try:
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
             ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, timeout)
@@ -33,17 +33,17 @@ class ADService:
             )
         except ldap.LDAPError as e:
             raise HTTPException(
-                status_code=500, detail=f"Ошибка подключения к AD: {str(e)}"
+                status_code=500, detail=f"AD connection error: {str(e)}"
             )
 
     def disconnect(self) -> None:
-        """Закрывает соединение с AD"""
+        """Disconnect from Active Directory"""
         if self.connection:
             self.connection.unbind_s()
             self.connection = None
 
     def create_ou(self, ou_name: str, base_dn: str) -> None:
-        """Создает Organizational Unit в AD"""
+        """Create Organizational Unit in Active Directory"""
         ou_dn = f"OU={ou_name},{base_dn}"
         try:
             ldif = modlist.addModlist(
@@ -53,28 +53,28 @@ class ADService:
                 }
             )
             self.connection.add_s(ou_dn, ldif)
-            logger.debug(f"Создан OU: {ou_dn}")
+            logger.debug(f"OU has been successfully created: {ou_dn}")
         except ldap.ALREADY_EXISTS:
-            logger.debug(f"OU уже существует: {ou_dn}")
+            logger.debug(f"OU already exists: {ou_dn}")
             pass
         except ldap.LDAPError as e:
             raise HTTPException(
-                status_code=500, detail=f"Ошибка при создании OU {ou_dn}: {str(e)}"
+                status_code=500, detail=f"Error while creating OU '{ou_dn}': {str(e)}"
             )
 
     def add_to_groups(self, user_dn: str, group_dns: list[str], username: str) -> None:
-        """Добавляет пользователя в группы по их DN"""
+        """Add user to groups"""
         for group_dn in group_dns:
             try:
                 mod_attrs = [(ldap.MOD_ADD, "member", user_dn.encode("utf-8"))]
                 self.connection.modify_s(group_dn, mod_attrs)
             except ldap.NO_SUCH_OBJECT:
                 logger.warning(
-                    f"Группа {group_dn} не найдена для {username}, пропускаем"
+                    f"Group '{group_dn}' was not found for '{username}', skip it"
                 )
             except ldap.LDAPError as e:
                 logger.error(
-                    f"Ошибка добавления {username} в группу {group_dn}: {str(e)}"
+                    f"Error adding '{username}' to '{group_dn}' group: {str(e)}"
                 )
                 continue
 
@@ -90,13 +90,12 @@ class ADService:
             ):
                 raise HTTPException(
                     status_code=409,
-                    detail=f"Учетная запись {username} уже существует в БД",
+                    detail=f"An account already exists in the database for '{username}'",
                 )
 
             user_dn = f"CN={username},{config.ldap.default_users_dn}"
-            logger.info(f"Создание пользователя: user_dn={user_dn}")
 
-            # Создаём все OU
+            # Create all nesting OU
             dn_parts = config.ldap.default_users_dn.split(",")
             ou_parts = [
                 part.split("=")[1] for part in dn_parts if part.startswith("OU=")
@@ -125,11 +124,12 @@ class ADService:
                 }
                 ldif = modlist.addModlist(ldap_attrs)
                 self.connection.add_s(user_dn, ldif)
-                logger.info(f"Пользователь успешно создан: {user_dn}")
+                logger.info(f"Account successfully created: {user_dn}")
+
             except ldap.ALREADY_EXISTS:
                 was_existing = True
                 logger.info(
-                    f"Пользователь уже существует, сбрасываем пароль: {user_dn}"
+                    f"Account already exists, reset password: {user_dn}"
                 )
                 new_password = self.reset_password(username, user_dn)
                 encrypted_password = self.encryptor.encrypt_password(new_password)
@@ -144,15 +144,15 @@ class ADService:
             return ad_account, was_existing
 
         except ldap.LDAPError as e:
-            logger.error(f"Ошибка LDAP: {str(e)}")
+            logger.error(f"Error when creating AD account: {str(e)}")
             raise HTTPException(
-                status_code=500, detail=f"Ошибка при создании учетной записи: {str(e)}"
+                status_code=500, detail=f"Error when creating AD account: {str(e)}"
             )
         finally:
             self.disconnect()
 
     def reset_password(self, username: str, user_dn: str) -> str:
-        """Сбрасывает пароль пользователя в AD"""
+        """Reset user password in AD"""
         try:
             new_password = generate_password()
             unicode_pwd = f'"{new_password}"'.encode("utf-16-le")
@@ -161,15 +161,10 @@ class ADService:
             return new_password
         except ldap.NO_SUCH_OBJECT:
             raise HTTPException(
-                status_code=404, detail=f"Пользователь с DN {user_dn} не найден в AD"
-            )
-        except ldap.INSUFFICIENT_ACCESS:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Недостаточно прав для сброса пароля {username}",
+                status_code=404, detail=f"User not found with such DN: '{user_dn}'"
             )
         except ldap.LDAPError as e:
             raise HTTPException(
                 status_code=500,
-                detail=f"Ошибка при сбросе пароля для {username}: {str(e)}",
+                detail=f"Error resetting password for: '{username}': {str(e)}",
             )

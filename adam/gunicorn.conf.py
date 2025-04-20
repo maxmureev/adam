@@ -3,7 +3,7 @@ workers = 4
 worker_class = "uvicorn.workers.UvicornWorker"
 preload = True
 
-# Отключить логи Gunicorn
+# Disable Gunicorn logs
 accesslog = None
 errorlog = None
 loglevel = "critical"

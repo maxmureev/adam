@@ -4,35 +4,33 @@ from logging.handlers import RotatingFileHandler
 from fastapi import Request
 from config import config
 
-# Словарь для хранения уже созданных логгеров
+# Dictionary for storing already created loggers
 _loggers = {}
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Возвращает настроенный логгер с указанным именем."""
+    """Returns the configured logger with the specified name"""
     if name in _loggers:
         return _loggers[name]
 
     logger = logging.getLogger(name)
-    # Устанавливаем уровень логирования из конфигурации
     logger.setLevel(getattr(logging, config.log.level.upper(), logging.INFO))
-    # Предотвращаем дублирование логов
-    logger.propagate = False
+    logger.propagate = False  # Prevent duplicate logs
 
-    # Проверяем, были ли уже добавлены обработчики, чтобы избежать дублирования
+    # Check if the handlers have already been added to avoid duplicates
     if not logger.handlers:
-        # Формат логов
+        # Logs format
         log_format = logging.Formatter(
             "[%(asctime)s] [%(name)s] %(levelname)s %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-        # Обработчик для stdout/stderr
+        # Handler for stdout/stderr
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(log_format)
         logger.addHandler(console_handler)
 
-        # Обработчик для файла, если указан
+        # Handler for file
         if config.log.file:
             file_handler = RotatingFileHandler(
                 config.log.file, maxBytes=10 * 1024 * 1024, backupCount=5
@@ -45,7 +43,7 @@ def get_logger(name: str) -> logging.Logger:
 
 
 async def log_requests_middleware(request: Request, call_next):
-    """Middleware для логирования HTTP-запросов."""
+    """Middleware for logging HTTP requests"""
     logger = get_logger("http")
     client_ip = request.client.host
     method = request.method
@@ -77,11 +75,10 @@ async def log_requests_middleware(request: Request, call_next):
 
 
 def setup_logging():
-    """Настраивает централизованное логирование для приложения."""
-    # Создаём корневой логгер для инициализации
+    """Configures centralized logging for the application"""
     get_logger("root")
 
-    # Отключить логи от других библиотек
+    # Disable logs from other libraries
     logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
     logging.getLogger("alembic").setLevel(logging.WARNING)
     logging.getLogger("uvicorn").propagate = False

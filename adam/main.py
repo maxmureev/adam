@@ -10,7 +10,7 @@ from models.database import init_db
 from config import config
 from services.logging_config import setup_logging, log_requests_middleware, get_logger
 
-# Настройка логирования
+
 setup_logging()
 logger = get_logger(__name__)
 
@@ -25,10 +25,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Добавляем middleware для логирования HTTP-запросов
+# Middleware for logging HTTP requests
 app.middleware("http")(log_requests_middleware)
 
-# Добавляем middleware для сессий
+# Middleware for sessions
 app.add_middleware(
     SessionMiddleware, secret_key=config.encryption.secret_key.get_secret_value()
 )

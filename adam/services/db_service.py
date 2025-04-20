@@ -16,11 +16,11 @@ class DBService:
         self.encryptor = PasswordEncryptor()
 
     def get_sso_user_by_id(self, user_id: str) -> Optional[SSOUser]:
-        """Получает пользователя SSO по его UUID."""
+        """Get the SSO user by its UUID"""
         return self.db.query(SSOUser).filter(SSOUser.id == user_id).first()
 
     def get_ldap_accounts_by_user_id(self, user_id: str) -> List[LDAPAccount]:
-        """Получает все учетные записи LDAP для пользователя по его UUID."""
+        """Gets all LDAP accounts for a user by its UUID"""
         accounts = (
             self.db.query(LDAPAccount).filter(LDAPAccount.sso_user_id == user_id).all()
         )
@@ -37,7 +37,7 @@ class DBService:
     def create_ldap_account_record(
         self, user_id: str, username: str, encrypted_password: bytes
     ) -> LDAPAccount:
-        """Создает запись учетной записи LDAP в базе данных."""
+        """Creates LDAP account record in the database"""
         ad_account = LDAPAccount(
             sso_user_id=user_id,
             kdc_hosts=config.ldap.host,
@@ -55,7 +55,7 @@ class DBService:
         return ad_account
 
     def delete_ldap_account(self, user_id: str, username: str) -> None:
-        """Удаляет учетную запись LDAP из базы данных."""
+        """Deletes LDAP account from the database"""
         accounts = self.get_ldap_accounts_by_user_id(user_id)
         for account in accounts:
             if account.kadmin_principal == username:

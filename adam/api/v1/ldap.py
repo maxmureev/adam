@@ -32,8 +32,8 @@ async def create_ldap_account(
     db_service = DBService(db)
     sso_user = db_service.get_sso_user_by_id(user_id)
     if not sso_user:
-        error_message = "Пользователь не найден"
-        logger.info(f"User not found: {user_id}")
+        error_message = "User not found"
+        logger.error(f"{error_message}: {user_id}")
         if "application/json" in request.headers.get("Accept", ""):
             return JSONResponse(status_code=404, content={"detail": error_message})
         request.session["flash_message"] = error_message
@@ -41,15 +41,15 @@ async def create_ldap_account(
 
     try:
         username = sso_user.email.split("@")[0].replace(".", "_")
+
     except IndexError:
-        error_message = "Некорректный email пользователя"
-        logger.error(f"Invalid email format: {sso_user.email}")
+        error_message = "Invalid email"
+        logger.error(f"{error_message}: {sso_user.email}")
         if "application/json" in request.headers.get("Accept", ""):
             return JSONResponse(status_code=400, content={"detail": error_message})
         request.session["flash_message"] = error_message
         return RedirectResponse(url="/", status_code=303)
 
-    logger.info(f"Сгенерирован username: {username}")
     password = generate_password()
 
     try:
@@ -60,9 +60,9 @@ async def create_ldap_account(
             mail=sso_user.email,
             password=password,
         )
-        logger.info(f"Созданы атрибуты для {username}: {attributes.dict()}")
+
     except ValueError as e:
-        error_message = f"Ошибка валидации атрибутов: {str(e)}"
+        error_message = f"User attributes validation error: {str(e)}"
         logger.error(error_message)
         if "application/json" in request.headers.get("Accept", ""):
             return JSONResponse(status_code=400, content={"detail": error_message})
@@ -76,9 +76,9 @@ async def create_ldap_account(
         )
         logger.info(f"Account processed for {username}: {vars(ad_account)}")
         success_message = (
-            "Учётная запись AD уже существовала, пароль сброшен"
+            "AD account already exist, password reset"
             if was_existing
-            else "Учётная запись AD успешно создана"
+            else "AD account successfully created"
         )
     except HTTPException as e:
         error_message = e.detail
@@ -119,7 +119,7 @@ async def reset_ldap_account_password(
         ad_service.connect()
         sso_user = db_service.get_sso_user_by_id(user_id)
         if not sso_user:
-            error_message = "Пользователь не найден"
+            error_message = "User not found"
             request.session["flash_message"] = error_message
             raise HTTPException(status_code=404, detail=error_message)
 
@@ -131,7 +131,7 @@ async def reset_ldap_account_password(
                 account_found = account
                 break
         if not account_found:
-            error_message = f"Запись для {ldap_username} не найдена в БД"
+            error_message = f"No record found in the database for '{ldap_username}'"
             request.session["flash_message"] = error_message
             raise HTTPException(status_code=404, detail=error_message)
 
@@ -143,7 +143,7 @@ async def reset_ldap_account_password(
         db.commit()
         db.refresh(account_found)
 
-        success_message = f"Пароль для {ldap_username} успешно сброшен"
+        success_message = f"Password successfully reset for '{ldap_username}'"
         logger.info(success_message)
         request.session["flash_message"] = success_message
         return RedirectResponse(url="/", status_code=303)
@@ -153,7 +153,7 @@ async def reset_ldap_account_password(
         request.session["flash_message"] = e.detail
         return RedirectResponse(url="/", status_code=303)
     except Exception as e:
-        error_message = f"Ошибка при сбросе пароля: {str(e)}"
+        error_message = f"Password reset error: {str(e)}"
         logger.error(f"Unexpected error: {error_message}")
         request.session["flash_message"] = error_message
         return RedirectResponse(url="/", status_code=303)

@@ -83,13 +83,13 @@ class Settings(BaseSettings):
         self._setup_ldap_derivatives()
 
     def _setup_ldap_derivatives(self) -> None:
-        """Вычисляет производные LDAP-значения после инициализации."""
+        """Calculates LDAP settings"""
         self.ldap.nested_dn = self._compute_nested_dn()
         self.ldap.host = self.ldap.url.split("//")[-1]
         self.ldap.realm = self._compute_realm()
 
     def _compute_nested_dn(self) -> Dict[str, str]:
-        """Вычисляет вложенные DN для OU."""
+        """Calculates the nested DNs for OU"""
         ou_list = [
             ou.split("=")[1]
             for ou in self.ldap.default_users_dn.split(",")
@@ -101,7 +101,7 @@ class Settings(BaseSettings):
         }
 
     def _compute_realm(self) -> str:
-        """Вычисляет LDAP realm из base_dn."""
+        """Calculates the LDAP realm from base_dn"""
         domain_parts = [
             part.split("=")[1]
             for part in self.ldap.default_users_dn.split(",")
@@ -110,5 +110,5 @@ class Settings(BaseSettings):
         return ".".join(domain_parts).upper()
 
 
-# Создание экземпляра настроек
+
 config = Settings()

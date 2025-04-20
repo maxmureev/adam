@@ -7,12 +7,12 @@ class PasswordEncryptor:
         self.cipher = Fernet(config.encryption.secret_key.get_secret_value().encode())
 
     def encrypt_password(self, password: str) -> bytes:
-        """Шифрует пароль."""
+        """Encrypt the password"""
         return self.cipher.encrypt(password.encode())
 
     def decrypt_password(self, encrypted_password: bytes) -> str:
-        """Расшифровывает пароль"""
+        """Decrypt the password"""
         try:
             return self.cipher.decrypt(encrypted_password).decode()
         except Exception as e:
-            raise ValueError(f"Ошибка расшифровки пароля: {str(e)}")
+            raise ValueError(f"Password decryption error: {str(e)}")

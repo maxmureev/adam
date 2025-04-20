@@ -8,26 +8,25 @@ from schemas import SSOUserCreate
 from schemas import SSOUserResponse
 from config import config
 
-
 user_router = APIRouter(prefix=config.api.v1.users, tags=["User"])
 
 
 @user_router.get("/{username}", response_model=SSOUserResponse)
 def get_id_by_username(username: str, db: Session = Depends(get_db)):
-    # Ищет пользователя по username
+    # Search for a user by username
     db_user = db.query(SSOUser).filter(SSOUser.username == username).first()
 
-    # Если пользователь не найден, возвращает 404
+    # If the user is not found, returns 404
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    # Возвращает данные пользователя
+    # Return the user's data
     db_user.id = db_user.id
     return db_user
 
 
 @user_router.post("/", response_model=SSOUserCreate)
 def create_user(user: SSOUserCreate, db: Session = Depends(get_db)):
-    # Проверяет, существует ли пользователь с таким sso_id или username
+    # Check if a user with this sso_id or username exists
     db_user_sso = db.query(SSOUser).filter(SSOUser.sso_id == user.sso_id).first()
     db_user_username = (
         db.query(SSOUser).filter(SSOUser.username == user.username).first()
@@ -42,9 +41,9 @@ def create_user(user: SSOUserCreate, db: Session = Depends(get_db)):
             status_code=400, detail="User with this username already exists"
         )
 
-    # Создает нового пользователя
+    # Create a new user
     db_user = SSOUser(
-        id=uuid4(),  # Генерирует UUID
+        id=uuid4(),  # Generate UUID
         sso_id=user.sso_id,
         username=user.username,
         email=user.email,
@@ -54,7 +53,7 @@ def create_user(user: SSOUserCreate, db: Session = Depends(get_db)):
         picture=user.picture,
     )
 
-    # Добавляет пользователя в БД
+    # Add a user to the database
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -64,30 +63,28 @@ def create_user(user: SSOUserCreate, db: Session = Depends(get_db)):
 
 @user_router.put("/{user_id}", response_model=SSOUserResponse)
 async def update_user(
-    user_id: str,  # UUID пользователя
-    user_data: SSOUserCreate,  # Данные для обновления
-    db: Session = Depends(get_db),  # Сессия БД
+    user_id: str,
+    user_data: SSOUserCreate,
+    db: Session = Depends(get_db),
 ):
 
-    # Ищет пользователя по ID
+    # Search user by ID
     db_user = db.query(SSOUser).filter(SSOUser.id == user_id).first()
 
-    # Если пользователь не найден, возвращает 404
+    # If user is not found, returns 404
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Обновляет поля пользователя
+    # Updates user's fields
     for key, value in user_data.model_dump(exclude_unset=True).items():
         setattr(db_user, key, value)
 
-    # Сохраняет изменения в БД
+    # Save changes to database
     db.commit()
     db.refresh(db_user)
-
-    # Преобразует UUID в строку для ответа
     db_user.id = str(db_user.id)
 
-    # Возвращает обновленные данные пользователя
+    # Return updated user data
     return db_user
 
 

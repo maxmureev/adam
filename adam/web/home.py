@@ -58,7 +58,6 @@ async def home_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
             },
         )
 
-    # Получить пользователя через DBService
     db_service = DBService(db)
     sso_user = db_service.get_sso_user_by_id(user_id)
     if not sso_user:

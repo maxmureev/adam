@@ -10,7 +10,6 @@ from services.sso_service import sso
 from config import config
 
 auth_router = APIRouter(prefix=config.api.auth, tags=["Auth"])
-
 serializer = URLSafeSerializer(config.encryption.user_session_key.get_secret_value())
 
 
@@ -24,12 +23,12 @@ async def auth_init():
 async def auth_callback(request: Request, db: Session = Depends(get_db)):
     try:
         async with sso:
-            # Получает данные пользователя от SSO
+            # Get user data from SSO
             user = await sso.verify_and_process(request)
-            # Проверяет, есть ли пользователь в БД
+            # Check if the user exists in the database
             existing_user = db.query(SSOUser).filter(SSOUser.sso_id == user.id).first()
             if not existing_user:
-                # Если пользователя нет — добавить
+                # If the user does not exist - add
                 sso_user = SSOUser(
                     sso_id=user.id,
                     username=user.email.split("@")[0],
@@ -44,10 +43,13 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
                 existing_user = sso_user
 
             token = serializer.dumps(str(existing_user.id))
-            # Устанавливает куку и перенаправляет на главную страницу
+            # Set a cookie and redirects to the home page
             response = RedirectResponse(url="/", status_code=303)
             response.set_cookie(
-                key="auth_token", max_age=config.users.cookie_ttl, httponly=True, value=token
+                key="auth_token",
+                max_age=config.users.cookie_ttl,
+                httponly=True,
+                value=token,
             )
             return response
 
@@ -57,7 +59,7 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
             detail="SSO authorization code has expired. Please log in again.",
         )
 
-    except Exception :
+    except Exception:
         raise HTTPException(
             status_code=500,
             detail="Authorization error occurred. Please try again",
