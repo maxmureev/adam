@@ -260,10 +260,10 @@ header {
   overflow-x: auto;
 }
 
-table {
-  width: auto !important;
+.table-container table {
+  width: 100% !important;
   max-width: 100%;
-    border-collapse: collapse;
+  border-collapse: collapse;
   table-layout: auto;
 }
 
@@ -279,4 +279,3 @@ th {
   background-color: #f2f2f2;
   text-align: right;
 }
-
