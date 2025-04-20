@@ -51,16 +51,14 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
             )
             return response
 
-    except InvalidGrantError as e:
-        print(f"Ошибка авторизации: {e}")
+    except InvalidGrantError:
         raise HTTPException(
             status_code=400,
             detail="SSO authorization code has expired. Please log in again.",
         )
 
-    except Exception as e:
-        print(f"Ошибка при обработке callback: {e}")
+    except Exception :
         raise HTTPException(
             status_code=500,
-            detail="Authorization error occurred. Please try again.",
+            detail="Authorization error occurred. Please try again",
         )

@@ -1,11 +1,13 @@
 from sqlalchemy.orm import Session
-from uuid import UUID
 from typing import List, Optional
 
 from config import config
 from models.users import SSOUser
 from models.ldap_accounts import LDAPAccount
 from services.encryption import PasswordEncryptor
+from services.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class DBService:
@@ -28,8 +30,8 @@ class DBService:
                     account.kadmin_password
                 )
             except Exception as e:
-                print(f"Ошибка расшифровки пароля: {e}")
-                account.kadmin_password = "Ошибка расшифровки"
+                logger.error(f"Password decryption error: {e}")
+                account.kadmin_password = "Decryption error"
         return accounts
 
     def create_ldap_account_record(

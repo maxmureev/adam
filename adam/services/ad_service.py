@@ -1,10 +1,8 @@
 from typing import Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from uuid import UUID
 import ldap
 from ldap import modlist
-import logging
 
 from config import config
 from services.encryption import PasswordEncryptor
@@ -12,9 +10,9 @@ from services.utils import generate_password
 from services.db_service import DBService
 from models.ldap_accounts import LDAPAccount
 from schemas.ldap import LDAPUserAttributes
+from services.logging_config import get_logger
 
-logging.basicConfig(level=logging.WARNING)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ADService:
@@ -55,7 +53,7 @@ class ADService:
                 }
             )
             self.connection.add_s(ou_dn, ldif)
-            logger.info(f"Создан OU: {ou_dn}")
+            logger.debug(f"Создан OU: {ou_dn}")
         except ldap.ALREADY_EXISTS:
             logger.debug(f"OU уже существует: {ou_dn}")
             pass
@@ -160,7 +158,6 @@ class ADService:
             unicode_pwd = f'"{new_password}"'.encode("utf-16-le")
             mod_attrs = [(ldap.MOD_REPLACE, "unicodePwd", unicode_pwd)]
             self.connection.modify_s(user_dn, mod_attrs)
-            logger.info(f"Пароль сброшен для {username}")
             return new_password
         except ldap.NO_SUCH_OBJECT:
             raise HTTPException(

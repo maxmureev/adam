@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import uuid4
-from uuid import UUID
 
 from models.database import get_db
 from models.users import SSOUser

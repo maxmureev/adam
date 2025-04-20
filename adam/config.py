@@ -56,6 +56,11 @@ class UsersConfig(BaseModel):
     cookie_ttl: int = 10_368_000  # 120 days or ~1/3 year
 
 
+class LogConfig(BaseModel):
+    level: str = "INFO"
+    file: Optional[str] = None
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -68,6 +73,7 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
     users: UsersConfig = UsersConfig()
+    log: LogConfig
     sso: SSOConfig
     ldap: LDAPConfig
     encryption: EncryptionConfig

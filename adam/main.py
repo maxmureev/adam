@@ -8,15 +8,25 @@ import api
 import web
 from models.database import init_db
 from config import config
+from services.logging_config import setup_logging, log_requests_middleware, get_logger
+
+# Настройка логирования
+setup_logging()
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Starting application")
     init_db()
     yield
+    logger.info("Shutting down application")
 
 
 app = FastAPI(lifespan=lifespan)
+
+# Добавляем middleware для логирования HTTP-запросов
+app.middleware("http")(log_requests_middleware)
 
 # Добавляем middleware для сессий
 app.add_middleware(
@@ -25,7 +35,7 @@ app.add_middleware(
 
 app.include_router(api.api_router)
 app.include_router(web.home_router)
-app.include_router(api.health_router)
+app.include_router(web.health_router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
@@ -35,5 +45,5 @@ if __name__ == "__main__":
         port=config.run.port,
         reload=True,
         log_config=None,
-        log_level="info",
+        log_level="critical",
     )

@@ -3,11 +3,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from alembic.config import Config
 from alembic.command import upgrade
-import logging
 
 from config import config
+from services.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Настройка движка SQLAlchemy
 engine = create_engine(config.db.url, connect_args={"check_same_thread": False})
@@ -22,10 +22,6 @@ def init_db():
 
     # Проверка существования файла базы данных
     if not os.path.exists(config.db.path):
-        # logger.info(
-        #     f"Database file {config.db.path} does not exist. Creating database and applying migrations."
-        # )
-
         # Миграции Alembic
         try:
             alembic_cfg = Config(alembic_cfg_path)
@@ -35,10 +31,6 @@ def init_db():
         except Exception as e:
             logger.error(f"Failed to apply Alembic migrations: {e}")
             raise
-    # else:
-    #     logger.info(
-    #         f"Database file {config.db.path} already exists. Skipping migration application."
-    #     )
 
 
 def get_db():

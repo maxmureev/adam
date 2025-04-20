@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from uuid import UUID
-import logging
 
 from config import config
 from models.database import get_db
@@ -10,16 +8,15 @@ from services.ad_service import ADService
 from services.db_service import DBService
 from services.utils import generate_password
 from schemas.ldap import LDAPUserAttributes
+from services.logging_config import get_logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 ldap_router = APIRouter(prefix=f"{config.api.v1.users}/{{user_id}}", tags=["LDAP"])
+logger = get_logger(__name__)
 
 
 @ldap_router.get("/ldap_account")
 async def get_ldap_accounts(user_id: str, db: Session = Depends(get_db)):
-    logger.info(f"GET /api/v1/user/{user_id}/ldap_account called")
     db_service = DBService(db)
     sso_user = db_service.get_sso_user_by_id(user_id)
     if not sso_user:
@@ -32,7 +29,6 @@ async def get_ldap_accounts(user_id: str, db: Session = Depends(get_db)):
 async def create_ldap_account(
     user_id: str, request: Request, db: Session = Depends(get_db)
 ):
-    logger.info(f"POST /api/v1/user/{user_id}/ldap_account called")
     db_service = DBService(db)
     sso_user = db_service.get_sso_user_by_id(user_id)
     if not sso_user:
@@ -116,7 +112,6 @@ async def create_ldap_account(
 async def reset_ldap_account_password(
     user_id: str, request: Request, db: Session = Depends(get_db)
 ):
-    logger.info(f"POST /api/v1/user/{user_id}/ldap_account/reset_password called")
     db_service = DBService(db)
     ad_service = ADService()
 
