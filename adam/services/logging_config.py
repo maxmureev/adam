@@ -50,13 +50,29 @@ async def log_requests_middleware(request: Request, call_next):
     client_ip = request.client.host
     method = request.method
     path = request.url.path
+
+    excluded_paths = [
+        "/static",
+    ]
+    excluded_files = [
+        "/favicon.ico",
+    ]
+
+    # Проверяем, начинается ли путь с исключённых путей или соответствует исключённым файлам
+    should_log = not (
+        any(path.startswith(excluded_path) for excluded_path in excluded_paths)
+        or path in excluded_files
+    )
+
     try:
         response = await call_next(request)
-        status_code = response.status_code
-        logger.info(f'{client_ip} "{method} {path} HTTP/1.1" {status_code}')
+        if should_log:
+            status_code = response.status_code
+            logger.info(f'{client_ip} "{method} {path} HTTP/1.1" {status_code}')
         return response
     except Exception as e:
-        logger.error(f'{client_ip} "{method} {path} HTTP/1.1" 500 - {str(e)}')
+        if should_log:
+            logger.error(f'{client_ip} "{method} {path} HTTP/1.1" 500 - {str(e)}')
         raise
 
 
