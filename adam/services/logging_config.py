@@ -58,7 +58,7 @@ async def log_requests_middleware(request: Request, call_next):
         "/favicon.ico",
     ]
 
-    # Проверяем, начинается ли путь с исключённых путей или соответствует исключённым файлам
+
     should_log = not (
         any(path.startswith(excluded_path) for excluded_path in excluded_paths)
         or path in excluded_files
