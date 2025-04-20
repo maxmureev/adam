@@ -52,6 +52,10 @@ class DatabaseConfig(BaseModel):
     # url: str = f"sqlite+aiosqlite:///{path}"
 
 
+class UsersConfig(BaseModel):
+    cookie_ttl: int = 10_368_000  # 120 days or ~1/3 year
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -63,6 +67,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig = DatabaseConfig()
     run: RunConfig = RunConfig()
     api: ApiPrefix = ApiPrefix()
+    users: UsersConfig = UsersConfig()
     sso: SSOConfig
     ldap: LDAPConfig
     encryption: EncryptionConfig

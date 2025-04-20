@@ -46,7 +46,9 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
             token = serializer.dumps(str(existing_user.id))
             # Устанавливает куку и перенаправляет на главную страницу
             response = RedirectResponse(url="/", status_code=303)
-            response.set_cookie(key="auth_token", value=token)
+            response.set_cookie(
+                key="auth_token", max_age=config.users.cookie_ttl, httponly=True, value=token
+            )
             return response
 
     except InvalidGrantError as e:
