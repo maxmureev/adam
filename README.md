@@ -12,9 +12,9 @@
 - Обычно каждому пользователю достаточно одного AD аккаунта
 - Авторизация должна производиться через корпоративный SSO
 - В AD должен быть
-    - Создан пользователь
-    - Создан organisation unit для этого пользователя
-    - Добавить пользователя в уже существующую группу
+  - Создан пользователь
+  - Создан organisation unit для этого пользователя
+  - Добавить пользователя в уже существующую группу
 
 ## Реализация
 
@@ -32,18 +32,18 @@
 - Пользователь логинится через SSO
 - Username для AD аккаунта формируется из email, указанного в профиле SSO
 - Сервис проверяет в базе наличие записи о существовании AD учетки для этого пользователя
-    - Если запись существует, пользователю показываются параметры подключения
-    - Если записи не существует, предлагается создать новый аккаунт
+  - Если запись существует, пользователю показываются параметры подключения
+  - Если записи не существует, предлагается создать новый аккаунт
 - При создании AD аккаунта
-    - Если аккаунт с таким username не существует в AD
-        - Генерируется пароль
-        - Создаётся учётная запись
-        - Создаётся пользовательский OU
-        - Назначаются права на этот UO путем добавления в группу
-    - Если аккаунт с таким username уже существует в AD
-        - Генерируется новый пароль
-        - Пароль аккаунта принудительно сбрасывается на новый
-    - Данные аккаунта (username, пароль в зашифрованном виде) сохраняются в базе данных и связываются с профилем
+  - Если аккаунт с таким username не существует в AD
+    - Генерируется пароль
+    - Создаётся учётная запись
+    - Создаётся пользовательский OU
+    - Назначаются права на этот UO путем добавления в группу
+  - Если аккаунт с таким username уже существует в AD
+    - Генерируется новый пароль
+    - Пароль аккаунта принудительно сбрасывается на новый
+  - Данные аккаунта (username, пароль в зашифрованном виде) сохраняются в базе данных и связываются с профилем
       пользователя. Это предотвращает необходимость сброса пароля для его отображения, так как пароль в AD нельзя
       посмотреть, а только сбросить
 - После появления записи об AD аккаунте в БД, результат отображается на страничке в виде списка параметров для настройки
@@ -183,4 +183,68 @@ Applying the latest migration
 
 ```shell
 alembic upgrade head
+```
+
+## Performance
+
+Для теста сервис запускался с 4 воркерами.
+В запросе кука авторизации, благодаря которой сервис делает два запроса к БД для извлечения данных пользователя.
+Всего 5000 запросов и 20 из них одновременно. При таких условиях на локальном железе сервис держит чуть больше 1500 запросов в секунду. Если увеличивать количество одновременных коннектов или их количество, то приложение падает и перезапускается. Считаю, что для моих целей этого более, чем достаточно, поскольку ориентировочная нарузка будет менее 1000 запросов в сутки.
+
+```
+$ ab -n 5000 -c 20 -C "auth_token=ImIxNDExYTFjLWM2YjMtNGQ0Mi04OWY1LTYzNmRmMGQ5ZDVjNiI.LH-03TuC_gmh9BO-kYwBAaWCitI" http://localhost:8000/
+
+This is ApacheBench, Version 2.3 <$Revision: 1913912 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking localhost (be patient)
+Completed 500 requests
+Completed 1000 requests
+Completed 1500 requests
+Completed 2000 requests
+Completed 2500 requests
+Completed 3000 requests
+Completed 3500 requests
+Completed 4000 requests
+Completed 4500 requests
+Completed 5000 requests
+Finished 5000 requests
+
+
+Server Software:        uvicorn
+Server Hostname:        localhost
+Server Port:            8000
+
+Document Path:          /
+Document Length:        6444 bytes
+
+Concurrency Level:      20
+Time taken for tests:   2.838 seconds
+Complete requests:      5000
+Failed requests:        0
+Total transferred:      32990000 bytes
+HTML transferred:       32220000 bytes
+Requests per second:    1761.86 [#/sec] (mean)
+Time per request:       11.352 [ms] (mean)
+Time per request:       0.568 [ms] (mean, across all concurrent requests)
+Transfer rate:          11352.30 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.4      0       3
+Processing:     2   10  14.1      8     252
+Waiting:        2    9  13.9      8     251
+Total:          2   11  14.1      9     253
+
+Percentage of the requests served within a certain time (ms)
+  50%      9
+  66%     10
+  75%     11
+  80%     12
+  90%     15
+  95%     18
+  98%     26
+  99%     54
+ 100%    253 (longest request)
 ```
