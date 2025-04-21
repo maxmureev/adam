@@ -1,6 +1,6 @@
 **/*.git*
 **/.*
 **/tests/
-# adam/database.**
+**/database.sqlite
 venv
 **/__pycache__

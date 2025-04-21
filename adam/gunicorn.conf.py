@@ -8,3 +8,9 @@ accesslog = None
 errorlog = None
 loglevel = "critical"
 disable_redirect_access_to_syslog = True
+
+# Debug
+# accesslog = "-"
+# errorlog = "-"
+# loglevel = "debug"
+# disable_redirect_access_to_syslog = False
