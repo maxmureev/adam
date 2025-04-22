@@ -51,6 +51,7 @@ async def log_requests_middleware(request: Request, call_next):
 
     excluded_paths = [
         "/static",
+        "/health",
     ]
     excluded_files = [
         "/favicon.ico",
