@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from config import config
 from models.database import get_db
+from models.ldap_accounts import LDAPAccount
 from services.ad_service import ADService
 from services.db_service import DBService
 from services.utils import generate_password
@@ -41,7 +42,6 @@ async def create_ldap_account(
 
     try:
         username = sso_user.email.split("@")[0].replace(".", "_")
-
     except IndexError:
         error_message = "Invalid email"
         logger.error(f"{error_message}: {sso_user.email}")
@@ -60,7 +60,6 @@ async def create_ldap_account(
             mail=sso_user.email,
             password=password,
         )
-
     except ValueError as e:
         error_message = f"User attributes validation error: {str(e)}"
         logger.error(error_message)
@@ -92,17 +91,25 @@ async def create_ldap_account(
 
     logger.info(f"Success: {success_message}")
     if "application/json" in request.headers.get("Accept", ""):
-        account_dict = {
-            "sso_user_id": str(ad_account.sso_user_id),
-            "kadmin_principal": ad_account.kadmin_principal,
-            "admin_DN": ad_account.admin_dn,
-            "kadmin_password": db_service.encryptor.decrypt_password(
-                ad_account.kadmin_password
-            ),
+        # Prepare JSON response with all fields displayed in web interface
+        columns = [
+            col.name
+            for col in LDAPAccount.__table__.columns
+            if col.name not in ["sso_user_id", "created_at"]
+        ]
+        account_dict = {col: getattr(ad_account, col) for col in columns}
+        # Decrypt password for display
+        account_dict["kadmin_password"] = db_service.encryptor.decrypt_password(
+            ad_account.kadmin_password
+        )
+        # Map column names to display names
+        display_account = {
+            LDAPAccount.display_names.get(col, col): value
+            for col, value in account_dict.items()
         }
         return JSONResponse(
             status_code=200,
-            content={"message": success_message, "account": account_dict},
+            content={"message": success_message, "account": display_account},
         )
     request.session["flash_message"] = success_message
     return RedirectResponse(url="/", status_code=303)
@@ -120,8 +127,10 @@ async def reset_ldap_account_password(
         sso_user = db_service.get_sso_user_by_id(user_id)
         if not sso_user:
             error_message = "User not found"
+            if "application/json" in request.headers.get("Accept", ""):
+                raise HTTPException(status_code=404, detail=error_message)
             request.session["flash_message"] = error_message
-            raise HTTPException(status_code=404, detail=error_message)
+            return RedirectResponse(url="/", status_code=303)
 
         ldap_username = sso_user.email.split("@")[0].replace(".", "_")
         accounts = db_service.get_ldap_accounts_by_user_id(user_id)
@@ -132,8 +141,10 @@ async def reset_ldap_account_password(
                 break
         if not account_found:
             error_message = f"No record found in the database for '{ldap_username}'"
+            if "application/json" in request.headers.get("Accept", ""):
+                raise HTTPException(status_code=404, detail=error_message)
             request.session["flash_message"] = error_message
-            raise HTTPException(status_code=404, detail=error_message)
+            return RedirectResponse(url="/", status_code=303)
 
         user_dn = f"CN={ldap_username},{config.ldap.default_users_dn}"
         new_password = ad_service.reset_password(ldap_username, user_dn)
@@ -145,16 +156,25 @@ async def reset_ldap_account_password(
 
         success_message = f"Password successfully reset for '{ldap_username}'"
         logger.info(success_message)
+        if "application/json" in request.headers.get("Accept", ""):
+            return JSONResponse(
+                status_code=200,
+                content={"message": success_message, "kadmin_password": new_password},
+            )
         request.session["flash_message"] = success_message
         return RedirectResponse(url="/", status_code=303)
 
     except HTTPException as e:
         logger.error(f"Reset password error: {e.detail}")
+        if "application/json" in request.headers.get("Accept", ""):
+            raise e
         request.session["flash_message"] = e.detail
         return RedirectResponse(url="/", status_code=303)
     except Exception as e:
         error_message = f"Password reset error: {str(e)}"
         logger.error(f"Unexpected error: {error_message}")
+        if "application/json" in request.headers.get("Accept", ""):
+            raise HTTPException(status_code=500, detail=error_message)
         request.session["flash_message"] = error_message
         return RedirectResponse(url="/", status_code=303)
     finally:

@@ -43,11 +43,10 @@ def create_user(user: SSOUserCreate, db: Session = Depends(get_db)):
 
     # Create a new user
     db_user = SSOUser(
-        id=uuid4(),  # Generate UUID
+        id=str(uuid4()),
         sso_id=user.sso_id,
         username=user.username,
         email=user.email,
-        full_name=f"{user.first_name} {user.last_name}",
         first_name=user.first_name,
         last_name=user.last_name,
         picture=user.picture,

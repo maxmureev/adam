@@ -85,12 +85,12 @@ class ADService:
             self.connect()
             db_service = DBService(db)
             if any(
-                account.Kadmin_principal == username
+                account.kadmin_principal == username
                 for account in db_service.get_ldap_accounts_by_user_id(user_id)
             ):
                 raise HTTPException(
                     status_code=409,
-                    detail=f"An account already exists in the database for '{username}'",
+                    detail=f"An account already exists in the database",
                 )
 
             user_dn = f"CN={username},{config.ldap.default_users_dn}"
@@ -128,9 +128,7 @@ class ADService:
 
             except ldap.ALREADY_EXISTS:
                 was_existing = True
-                logger.info(
-                    f"Account already exists, reset password: {user_dn}"
-                )
+                logger.info(f"Account already exists, reset password: {user_dn}")
                 new_password = self.reset_password(username, user_dn)
                 encrypted_password = self.encryptor.encrypt_password(new_password)
 

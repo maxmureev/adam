@@ -4,7 +4,7 @@
 <main class="mt-4">
 
   {% if message %}
-  <div class="alert {% if 'error' in message %}alert-danger{% else %}alert-success{% endif %}">
+  <div class="alert {% if 'error' in message.lower() %}alert-danger{% else %}alert-success{% endif %}">
     {{ message }}
   </div>
   {% endif %}
