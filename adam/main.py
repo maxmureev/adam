@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
+from services.restrict_access import restrict_access_middleware
 
 import api
 import web
@@ -32,6 +33,9 @@ app.middleware("http")(log_requests_middleware)
 app.add_middleware(
     SessionMiddleware, secret_key=config.encryption.secret_key.get_secret_value()
 )
+
+# Middleware restrict access
+app.middleware("http")(restrict_access_middleware)
 
 app.include_router(api.api_router)
 app.include_router(web.home_router)
