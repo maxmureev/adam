@@ -10,7 +10,7 @@
   {% endif %}
 
   {% if ad_accounts %}
-  <h2>Existing AD account</h2>
+  <h2>Existing Active Directory account</h2>
   <hr>
   <div class="table-container">
   <table class="table table-striped">
@@ -29,7 +29,7 @@
   </table>
   </div>
   <hr>
-  <h4>Reset AD account password</h4>
+  <h4>Reset Active Directory account password</h4>
   <form action="/api/v1/users/{{ user.id }}/ldap_account/reset_password" method="post"
     class="d-flex flex-column align-items-center">
 
@@ -47,7 +47,7 @@
   </form>
   {% else %}
 
-  <h2>Create a new AD account?</h2>
+  <h2>Create a new Active Directory account?</h2>
   <hr>
   <p class="lead">
   <form action="/api/v1/users/{{ user.id }}/ldap_account" method="post" style="display: inline;">
