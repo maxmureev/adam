@@ -31,9 +31,9 @@ def get_logger(name: str) -> logging.Logger:
         logger.addHandler(console_handler)
 
         # Handler for file
-        if config.log.file:
+        if config.log.file is True:
             file_handler = RotatingFileHandler(
-                config.log.file, maxBytes=10 * 1024 * 1024, backupCount=5
+                config.log.path, maxBytes=10 * 1024 * 1024, backupCount=5
             )
             file_handler.setFormatter(log_format)
             logger.addHandler(file_handler)
@@ -52,6 +52,7 @@ async def log_requests_middleware(request: Request, call_next):
     excluded_paths = [
         "/static",
         "/health",
+        "/api/health",
     ]
     excluded_files = [
         "/favicon.ico",
@@ -82,5 +83,5 @@ def setup_logging():
     # Disable logs from other libraries
     logging.getLogger("sqlalchemy").setLevel(logging.WARNING)
     logging.getLogger("alembic").setLevel(logging.WARNING)
-    logging.getLogger("uvicorn").propagate = False
-    logging.getLogger("gunicorn").propagate = False
+    logging.getLogger("uvicorn").propagate = True
+    logging.getLogger("gunicorn").propagate = True

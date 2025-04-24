@@ -39,6 +39,7 @@ async def restrict_access_middleware(request: Request, call_next):
         client_ip = request.client.host if request.client else "unknown"
         method = request.method
         path = request.url.path
+        db: Session = next(get_db())
 
         # Log the request attempt with username if available
         username = current_user.username if current_user else "anonymous"
@@ -81,7 +82,6 @@ async def restrict_access_middleware(request: Request, call_next):
                     )
 
                 # Allow access if username matches current user's username
-                db: Session = next(get_db())
                 requested_user = (
                     db.query(SSOUser).filter(SSOUser.username == path_parts[4]).first()
                 )
@@ -114,8 +114,8 @@ async def restrict_access_middleware(request: Request, call_next):
                     )
 
                     logger.warning(
-                        f'User {current_user.username if current_user else "anonymous"} ({client_ip}) '
-                        f"attempted access to {requested_username}'s account"
+                        f"User '{current_user.username if current_user else 'anonymous'}' ({client_ip}) "
+                        f"attempted access to '{requested_username}' account"
                     )
                     return JSONResponse(
                         status_code=status.HTTP_403_FORBIDDEN,

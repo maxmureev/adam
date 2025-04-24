@@ -82,7 +82,6 @@ class ADService:
         self, user_id: str, db: Session, username: str, attributes: LDAPUserAttributes
     ) -> Tuple[LDAPAccount, bool]:
         try:
-            self.connect()
             db_service = DBService(db)
             if any(
                 account.kadmin_principal == username
@@ -93,6 +92,7 @@ class ADService:
                     detail=f"An account already exists in the database",
                 )
 
+            self.connect()
             user_dn = f"CN={username},{config.ldap.default_users_dn}"
 
             # Create all nesting OU
