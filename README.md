@@ -61,7 +61,7 @@ SSO для разработки реализован через Яндекс ID 
 На стороне SSO от сервиса:
 
 - Suggest Hostname: Хост на котором будет работать сервис, например <https://myservice.domain.local> или <http://localhost:8000> для разработки
-- Redirect URI: {{ Suggest Hostname }}/api/auth/callback. Путь
+- Redirect URI: `{{ Suggest Hostname }}/api/auth/callback`. Путь после домена должен быть таким: `/api/auth/callback`
 
 На стороне приложения от SSO:
 
