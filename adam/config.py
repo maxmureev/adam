@@ -35,7 +35,6 @@ class SSOConfig(BaseModel):
 class LDAPConfig(BaseModel):
     domain: str
     base_dn: str
-    default_users_ou: Optional[str] = None
     member_of_groups: Optional[List[str]] = None
     url: str
     admin_dn: str
@@ -47,9 +46,8 @@ class LDAPConfig(BaseModel):
 
 
 class DatabaseConfig(BaseModel):
-    path: str = "data/database.sqlite"
+    path: str = "./data/db/database.sqlite"
     url: str = f"sqlite:///{path}"
-    # url: str = f"sqlite+aiosqlite:///{path}"
 
 
 class UsersConfig(BaseModel):
@@ -58,7 +56,8 @@ class UsersConfig(BaseModel):
 
 class LogConfig(BaseModel):
     level: str = "INFO"
-    file: Optional[str] = None
+    file: Optional[bool] = False
+    path: Optional[str] = "./data/logs/app.log"
 
 
 class Settings(BaseSettings):
@@ -108,7 +107,6 @@ class Settings(BaseSettings):
             if part.startswith("DC=")
         ]
         return ".".join(domain_parts).upper()
-
 
 
 config = Settings()

@@ -1,6 +1,10 @@
 **/*.git*
 **/.*
 **/tests/
-**/database.sqlite
 venv
 **/__pycache__
+
+db/*
+!db/
+logs/*
+!logs/
