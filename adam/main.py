@@ -38,8 +38,8 @@ app.add_middleware(
 app.middleware("http")(restrict_access_middleware)
 
 app.include_router(api.api_router)
+app.include_router(api.health_router)
 app.include_router(web.home_router)
-app.include_router(web.health_router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 if __name__ == "__main__":
@@ -49,5 +49,5 @@ if __name__ == "__main__":
         port=config.run.port,
         reload=True,
         log_config=None,
-        log_level="critical",
+        log_level="error",
     )
