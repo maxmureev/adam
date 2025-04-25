@@ -73,7 +73,9 @@ SSO для разработки реализован через Яндекс ID 
 
 ---
 
-Возможна интеграция FastAPI с [Keycloak](https://fastapi-keycloak-middleware.readthedocs.io/en/latest/usage.html) через Middleware, выглядит не сложно. Для реализации нужен доступ к тестовому сервису Keycloak.
+Возможна интеграция FastAPI с [Keycloak](https://fastapi-keycloak-middleware.readthedocs.io/en/latest/usage.html) через Middleware, выглядит не сложно. Для реализации нужен доступ к тестовому приложению в Keycloak сервисе.
+
+---
 
 #### Reverse proxy
 
