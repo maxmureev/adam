@@ -49,6 +49,47 @@
 - После появления записи об AD аккаунте в БД, результат отображается на страничке в виде списка параметров для настройки
   ADCM
 
+### Схема работы (упрощенная)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SSO
+    actor User
+    participant Frontend as Frontend
+    participant Backend as Backend
+    participant DB as SQLLite
+    participant AD as Active Directory
+
+    Note over SSO,AD: Login
+    User->>Frontend: Login
+    Frontend->>Backend: GET /login
+    Backend->>SSO: Redirect to SSO provider
+    SSO-->>Backend: Redirect to /callback
+    Backend->>DB: Create/Read user
+    note left of DB: User table
+    DB-->>Backend: User data
+    Backend-->>Frontend: Template for logged in user
+    Frontend-->>User: Show "Create account" button
+
+    Note over User,AD: Create account
+    User->>Frontend: Press "Create account" button
+    Frontend->>Backend: POST /api/v1/users/{id}/ldap_account
+    Backend->>DB: Read LDAP account
+    note left of DB: LDAP table
+    DB-->>Backend: LDAP account data
+
+    alt if LDAP account record not exist
+    Backend->>AD: Create and configure account
+    AD-->>Backend: Response
+    Backend->>DB: Create LDAP account record
+        DB-->>Backend: LDAP account data
+    end
+
+    Backend-->>Frontend: Render table with AD config
+    Frontend-->>User: Show AD config
+```
+
 ### Заметки
 
 #### SSO
@@ -124,7 +165,7 @@ user_id: UUID, ... -> user_id: str, ...
 
 Как сделать красиво и просто в голову не пришло. Зато теперь можно применять миграции.
 
-## Run
+## Launch
 
 ### Build
 
@@ -140,7 +181,7 @@ cp adam/.env_example /opt/adam/.env
 chmod 400 /opt/adam/.env
 ```
 
-### Run
+### Run in Docker
 
 Чтобы не потерять данные, в продакшн **обязательно используй внешнее хранилище для каталога с БД**
 
