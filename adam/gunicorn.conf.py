@@ -1,6 +1,5 @@
-from config import config
 
-bind = f"{config.run.host}:{config.run.port}"
+bind = "0.0.0.0:8000"
 workers = 4
 worker_class = "uvicorn.workers.UvicornWorker"
 preload = True
