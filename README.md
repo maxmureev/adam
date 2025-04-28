@@ -268,27 +268,39 @@ alembic upgrade head
 
 Для теста сервис запускался с 4 воркерами.
 В запросе кука авторизации, благодаря которой сервис делает два запроса к БД для извлечения данных пользователя.
-Всего 5000 запросов и 20 из них одновременно. При таких условиях на локальном железе сервис держит чуть больше 1500 запросов в секунду. Если увеличивать количество одновременных коннектов или их количество, то приложение падает и перезапускается. Считаю, что для моих целей этого более, чем достаточно, поскольку ориентировочная нарузка будет менее 1000 запросов в сутки.
+Всего 3000 запросов, 20 из которых одновременно. При таких условиях на локальном железе, с ограничением контейнера в 1 CPU и 512 Mem, сервис держит чуть больше 300 запросов в секунду. Если увеличивать количество одновременных коннектов или их общее количество, то процесс gunicorn в контейнере падает и перезапускается. Считаю, что для моих целей этого более, чем достаточно, поскольку ориентировочная нарузка будет менее 1000 запросов в сутки.
 
 ```shell
-$ ab -n 5000 -c 20 -C "auth_token=ImIxNDExYTFjLWM2YjMtNGQ0Mi04OWY1LTYzNmRmMGQ5ZDVjNiI.LH-03TuC_gmh9BO-kYwBAaWCitI" http://localhost:8000/
+$ docker run --rm \
+    --detach \
+    --name adam \
+    --env-file ~/work/adam/adam/.env \
+    --memory="512M" \
+    --memory-swap="1G" \
+    --cpus="1" \
+    --publish 8000:8000 \
+    adam:v0.1
+
+$ ab -n 3000 -c 20 \
+    -C "auth_token=IjBhZTdjOThkLThmNzctNDcyNy05YWVlLTRhOGEzYTFhY2RmMCI.kOaI6kDyzBaN_kSBugTddZSIX4g" \
+    http://localhost:8000/
 
 This is ApacheBench, Version 2.3 <$Revision: 1913912 $>
 Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
 Licensed to The Apache Software Foundation, http://www.apache.org/
 
 Benchmarking localhost (be patient)
-Completed 500 requests
-Completed 1000 requests
+Completed 300 requests
+Completed 600 requests
+Completed 900 requests
+Completed 1200 requests
 Completed 1500 requests
-Completed 2000 requests
-Completed 2500 requests
+Completed 1800 requests
+Completed 2100 requests
+Completed 2400 requests
+Completed 2700 requests
 Completed 3000 requests
-Completed 3500 requests
-Completed 4000 requests
-Completed 4500 requests
-Completed 5000 requests
-Finished 5000 requests
+Finished 3000 requests
 
 
 Server Software:        uvicorn
@@ -296,36 +308,38 @@ Server Hostname:        localhost
 Server Port:            8000
 
 Document Path:          /
-Document Length:        6444 bytes
+Document Length:        8246 bytes
 
 Concurrency Level:      20
-Time taken for tests:   2.838 seconds
-Complete requests:      5000
+Time taken for tests:   8.755 seconds
+Complete requests:      3000
 Failed requests:        0
-Total transferred:      32990000 bytes
-HTML transferred:       32220000 bytes
-Requests per second:    1761.86 [#/sec] (mean)
-Time per request:       11.352 [ms] (mean)
-Time per request:       0.568 [ms] (mean, across all concurrent requests)
-Transfer rate:          11352.30 [Kbytes/sec] received
+Total transferred:      25200000 bytes
+HTML transferred:       24738000 bytes
+Requests per second:    342.67 [#/sec] (mean)
+Time per request:       58.365 [ms] (mean)
+Time per request:       2.918 [ms] (mean, across all concurrent requests)
+Transfer rate:          2811.00 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.4      0       3
-Processing:     2   10  14.1      8     252
-Waiting:        2    9  13.9      8     251
-Total:          2   11  14.1      9     253
+Connect:        0    1   0.8      0       8
+Processing:     3   57  49.0     74     415
+Waiting:        3   52  46.7     29     415
+Total:          3   58  49.1     75     416
+WARNING: The median and mean for the initial connection time are not within a normal deviation
+        These results are probably not that reliable.
 
 Percentage of the requests served within a certain time (ms)
-  50%      9
-  66%     10
-  75%     11
-  80%     12
-  90%     15
-  95%     18
-  98%     26
-  99%     54
- 100%    253 (longest request)
+  50%     75
+  66%     84
+  75%     89
+  80%     92
+  90%     99
+  95%    113
+  98%    175
+  99%    189
+ 100%    416 (longest request)
 ```
 
 ## Известные недоработки
