@@ -92,7 +92,7 @@ class Settings(BaseSettings):
         ou_list = [
             ou.split("=")[1]
             for ou in self.ldap.default_users_dn.split(",")
-            if ou.startswith("OU=")
+            if ou.upper().startswith("OU=")
         ]
         return {
             ou_list[i]: ",".join(self.ldap.default_users_dn.split(",")[i + 1 :])
@@ -104,7 +104,7 @@ class Settings(BaseSettings):
         domain_parts = [
             part.split("=")[1]
             for part in self.ldap.default_users_dn.split(",")
-            if part.startswith("DC=")
+            if part.upper().startswith("DC=")
         ]
         return ".".join(domain_parts).upper()
 

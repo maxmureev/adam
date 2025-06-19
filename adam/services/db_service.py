@@ -6,6 +6,7 @@ from models.users import SSOUser
 from models.ldap_accounts import LDAPAccount
 from services.encryption import PasswordEncryptor
 from services.logging_config import get_logger
+from services.utils import dn_keys_to_upper
 
 logger = get_logger(__name__)
 
@@ -38,6 +39,10 @@ class DBService:
         self, user_id: str, username: str, encrypted_password: bytes
     ) -> LDAPAccount:
         """Creates LDAP account record in the database"""
+        admin_dn = dn_keys_to_upper(f"CN={username},{config.ldap.default_users_dn}")
+        container_dn = dn_keys_to_upper(
+            f"OU={username}_ou,{config.ldap.default_users_dn}"
+        )
         ad_account = LDAPAccount(
             sso_user_id=user_id,
             kdc_hosts=config.ldap.host,
@@ -45,9 +50,9 @@ class DBService:
             kadmin_server=config.ldap.host,
             kadmin_principal=username,
             kadmin_password=encrypted_password,
-            admin_dn=f"CN={username},{config.ldap.default_users_dn}",
+            admin_dn=admin_dn,
             ldap_url=config.ldap.url,
-            container_dn=f"OU={username}_ou,{config.ldap.default_users_dn}",
+            container_dn=container_dn,
         )
         self.db.add(ad_account)
         self.db.commit()
